@@ -2,10 +2,6 @@
 
 > **Thought-to-Code IDE** — Describe what you want to build in plain English. NeuroScribe translates it into production-ready code with real-time architecture insights, security analysis, and auto-generated README docs.
 
-![Version](https://img.shields.io/badge/version-1.0.0-00ff9d?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-a78bfa?style=flat-square)
-![Built With](https://img.shields.io/badge/built%20with-Claude%20AI-00d4ff?style=flat-square)
-![Zero Dependencies](https://img.shields.io/badge/dependencies-zero-fbbf24?style=flat-square)
 
 ---
 
