@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>NeuroScribe AI — Thought to Code</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,600;1,400&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #090b0f;
+    --bg2: #0e1117;
+    --bg3: #141820;
+    --panel: #181c24;
+    --border: #232832;
+    --border-bright: #2e3546;
+    --green: #00ff9d;
+    --green-dim: #00cc7a;
+    --green-glow: #00ff9d22;
+    --cyan: #00d4ff;
+    --purple: #a78bfa;
+    --amber: #fbbf24;
+    --red: #f87171;
+    --text: #e2e8f0;
+    --text2: #8892a4;
+    --text3: #4a5568;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+    --radius: 6px;
+    --radius-lg: 10px;
+  }
+
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 14px;
+    line-height: 1.6;
+    overflow: hidden;
+  }
+
+  /* ── SCANLINE OVERLAY ─────────────────────────────── */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.04) 2px,
+      rgba(0,0,0,0.04) 4px
+    );
+    pointer-events: none;
+    z-index: 9999;
+  }
+
+  /* ── LAYOUT ───────────────────────────────────────── */
+  #app {
+    display: grid;
+    grid-template-rows: 52px 1fr;
+    grid-template-columns: 260px 1fr 320px;
+    height: 100vh;
+    gap: 0;
+  }
+
+  /* ── TOPBAR ───────────────────────────────────────── */
+  #topbar {
+    grid-column: 1 / -1;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 20px;
+    gap: 20px;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-size: 17px;
+    font-weight: 800;
+    color: var(--green);
+    letter-spacing: -0.5px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    white-space: nowrap;
+  }
+
+  .logo-mark {
+    width: 22px; height: 22px;
+    background: var(--green);
+    border-radius: 4px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .logo-mark svg { display: block; }
+
+  .topbar-mid {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .lang-selector {
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    outline: none;
+  }
+
+  .lang-selector:focus { border-color: var(--green); }
+
+  .status-pill {
+    background: #00ff9d12;
+    border: 1px solid #00ff9d30;
+    color: var(--green);
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 999px;
+    display: flex; align-items: center; gap: 5px;
+  }
+
+  .status-dot {
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--green);
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  .topbar-actions { display: flex; gap: 8px; }
+
+  .top-btn {
+    background: transparent;
+    border: 1px solid var(--border-bright);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 12px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .top-btn:hover { background: var(--bg3); color: var(--text); border-color: var(--text3); }
+  .top-btn.primary { background: var(--green); color: var(--bg); border-color: var(--green); font-weight: 600; }
+  .top-btn.primary:hover { background: var(--green-dim); }
+
+  /* ── LEFT SIDEBAR ─────────────────────────────────── */
+  #sidebar {
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .sidebar-section {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 14px;
+  }
+
+  .sidebar-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    margin-bottom: 10px;
+  }
+
+  .thought-input {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 10px 12px;
+    resize: none;
+    min-height: 120px;
+    line-height: 1.6;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+
+  .thought-input:focus { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-glow); }
+  .thought-input::placeholder { color: var(--text3); font-style: italic; }
+
+  .gen-btn {
+    width: 100%;
+    margin-top: 8px;
+    background: var(--green);
+    color: var(--bg);
+    border: none;
+    border-radius: var(--radius);
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 9px;
+    cursor: pointer;
+    transition: background 0.15s;
+    letter-spacing: 0.2px;
+  }
+
+  .gen-btn:hover { background: var(--green-dim); }
+  .gen-btn:disabled { background: var(--text3); cursor: not-allowed; }
+
+  .option-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+  }
+
+  .option-row input[type=checkbox] { accent-color: var(--green); cursor: pointer; }
+
+  .examples-list { display: flex; flex-direction: column; gap: 4px; }
+
+  .example-chip {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 6px 10px;
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.15s;
+    line-height: 1.4;
+  }
+
+  .example-chip:hover { border-color: var(--green); color: var(--green); background: var(--green-glow); }
+
+  .history-list { display: flex; flex-direction: column; gap: 4px; overflow-y: auto; flex: 1; }
+
+  .history-item {
+    padding: 7px 10px;
+    border-radius: var(--radius);
+    font-size: 11px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all 0.1s;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .history-item:hover { background: var(--bg3); border-color: var(--border); color: var(--text); }
+  .history-item.active { background: var(--green-glow); border-color: #00ff9d30; color: var(--green); }
+
+  /* ── MAIN CODE AREA ───────────────────────────────── */
+  #main {
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .tabs {
+    display: flex;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    gap: 0;
+    align-items: flex-end;
+  }
+
+  .tab {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text3);
+    padding: 9px 16px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.15s;
+    display: flex; align-items: center; gap: 6px;
+    white-space: nowrap;
+  }
+
+  .tab:hover { color: var(--text2); }
+  .tab.active { color: var(--text); border-bottom-color: var(--green); }
+
+  .tab-dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--amber);
+    display: none;
+  }
+
+  .tab.has-content .tab-dot { display: block; }
+
+  .code-area {
+    flex: 1;
+    overflow-y: auto;
+    position: relative;
+  }
+
+  .code-area::-webkit-scrollbar { width: 6px; }
+  .code-area::-webkit-scrollbar-track { background: transparent; }
+  .code-area::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 3px; }
+
+  .code-wrapper {
+    display: flex;
+    min-height: 100%;
+  }
+
+  .line-nums {
+    width: 48px;
+    flex-shrink: 0;
+    padding: 20px 0;
+    text-align: right;
+    color: var(--text3);
+    font-size: 12px;
+    line-height: 1.7;
+    background: var(--bg);
+    border-right: 1px solid var(--border);
+    user-select: none;
+    padding-right: 10px;
+  }
+
+  #code-output {
+    flex: 1;
+    padding: 20px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    word-break: break-word;
+    tab-size: 2;
+    outline: none;
+    min-height: 100%;
+    color: var(--text);
+  }
+
+  .placeholder-screen {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    gap: 14px;
+    color: var(--text3);
+    padding: 40px;
+    text-align: center;
+  }
+
+  .placeholder-icon {
+    width: 60px; height: 60px;
+    border: 2px solid var(--border-bright);
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 28px;
+    margin-bottom: 4px;
+  }
+
+  .placeholder-title {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text2);
+  }
+
+  .placeholder-sub { font-size: 12px; line-height: 1.7; max-width: 340px; }
+
+  /* ── STREAMING CURSOR ─────────────────────────────── */
+  .stream-cursor {
+    display: inline-block;
+    width: 2px;
+    height: 14px;
+    background: var(--green);
+    animation: blink 0.7s infinite;
+    vertical-align: text-bottom;
+    margin-left: 1px;
+  }
+
+  @keyframes blink {
+    0%, 50% { opacity: 1; }
+    51%, 100% { opacity: 0; }
+  }
+
+  /* ── SYNTAX HIGHLIGHTING ──────────────────────────── */
+  .kw { color: #c084fc; }      /* keywords */
+  .str { color: #86efac; }     /* strings */
+  .com { color: #4a5568; font-style: italic; } /* comments */
+  .fn { color: #60a5fa; }      /* functions */
+  .num { color: #f97316; }     /* numbers */
+  .type { color: #fbbf24; }    /* types */
+  .op { color: #94a3b8; }      /* operators */
+  .var { color: #e2e8f0; }     /* variables */
+  .dec { color: #f472b6; }     /* decorators */
+
+  /* ── RIGHT PANEL ──────────────────────────────────── */
+  #right-panel {
+    background: var(--bg2);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-header {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--text3);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* ── INSIGHT CARDS ────────────────────────────────── */
+  .insight-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 12px 14px;
+    transition: border-color 0.15s;
+  }
+
+  .insight-card:hover { border-color: var(--border-bright); }
+
+  .insight-type {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .insight-badge {
+    padding: 2px 7px;
+    border-radius: 3px;
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .badge-arch { background: #a78bfa22; color: #a78bfa; border: 1px solid #a78bfa30; }
+  .badge-perf { background: #fbbf2422; color: #fbbf24; border: 1px solid #fbbf2430; }
+  .badge-sec { background: #f8717122; color: #f87171; border: 1px solid #f8717130; }
+  .badge-test { background: #60a5fa22; color: #60a5fa; border: 1px solid #60a5fa30; }
+  .badge-dep { background: #34d39922; color: #34d399; border: 1px solid #34d39930; }
+  .badge-idea { background: #00ff9d12; color: #00ff9d; border: 1px solid #00ff9d20; }
+
+  .insight-text {
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.6;
+  }
+
+  /* ── METRICS BAR ──────────────────────────────────── */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    padding: 10px 14px;
+    border-top: 1px solid var(--border);
+  }
+
+  .metric-box {
+    background: var(--bg3);
+    border-radius: var(--radius);
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+  }
+
+  .metric-label { font-size: 9px; color: var(--text3); letter-spacing: 0.8px; text-transform: uppercase; margin-bottom: 2px; }
+  .metric-value { font-size: 16px; font-family: var(--sans); font-weight: 600; color: var(--text); }
+  .metric-unit { font-size: 10px; color: var(--text3); margin-left: 2px; }
+
+  /* ── FOOTER ───────────────────────────────────────── */
+  .footer-bar {
+    grid-column: 1 / -1;
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    height: 26px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    gap: 20px;
+    font-size: 10px;
+    color: var(--text3);
+  }
+
+  .footer-item { display: flex; align-items: center; gap: 5px; }
+  .footer-item span.ok { color: var(--green); }
+  .footer-item span.warn { color: var(--amber); }
+
+  /* ── LOADING SHIMMER ──────────────────────────────── */
+  @keyframes shimmer {
+    0% { opacity: 0.4; }
+    50% { opacity: 0.8; }
+    100% { opacity: 0.4; }
+  }
+
+  .loading-line {
+    height: 13px;
+    background: var(--border-bright);
+    border-radius: 3px;
+    margin: 6px 0;
+    animation: shimmer 1.2s infinite;
+  }
+
+  /* ── README TAB ───────────────────────────────────── */
+  .readme-content {
+    padding: 24px 28px;
+    font-family: var(--mono);
+    font-size: 12px;
+    line-height: 1.8;
+    color: var(--text);
+    max-width: 680px;
+  }
+
+  .readme-content h1 { font-family: var(--sans); font-size: 22px; font-weight: 800; color: var(--green); margin-bottom: 8px; }
+  .readme-content h2 { font-family: var(--sans); font-size: 15px; font-weight: 600; color: var(--cyan); margin: 20px 0 8px; }
+  .readme-content h3 { font-size: 13px; color: var(--purple); margin: 14px 0 6px; }
+  .readme-content p { color: var(--text2); margin-bottom: 10px; }
+  .readme-content code { background: var(--bg3); border: 1px solid var(--border); padding: 1px 6px; border-radius: 3px; color: var(--amber); font-size: 11px; }
+  .readme-content pre { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px 16px; margin: 10px 0; overflow-x: auto; }
+  .readme-content ul { color: var(--text2); padding-left: 20px; }
+  .readme-content li { margin-bottom: 4px; }
+  .readme-content .badge-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 14px; }
+  .readme-badge { background: var(--bg3); border: 1px solid var(--border); border-radius: 4px; padding: 3px 10px; font-size: 10px; color: var(--text2); }
+
+  /* ── COPY BUTTON ──────────────────────────────────── */
+  .copy-btn {
+    position: absolute;
+    top: 12px;
+    right: 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 10;
+  }
+
+  .copy-btn:hover { border-color: var(--green); color: var(--green); }
+
+  /* ── TOAST ────────────────────────────────────────── */
+  #toast {
+    position: fixed;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%) translateY(60px);
+    background: var(--panel);
+    border: 1px solid var(--border-bright);
+    color: var(--text);
+    font-size: 12px;
+    padding: 8px 18px;
+    border-radius: 999px;
+    z-index: 99999;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+
+  #toast.show { transform: translateX(-50%) translateY(0); }
+
+  /* ── RESPONSIVE SCROLL ZONE ───────────────────────── */
+  #main { overflow: hidden; }
+  .code-area { overflow-y: auto; }
+</style>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- TOPBAR -->
+  <header id="topbar">
+    <div class="logo">
+      <div class="logo-mark">
+        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+          <path d="M2 7 L5 4 L8 7 L11 2" stroke="#090b0f" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="11" cy="10" r="2.5" fill="#090b0f"/>
+        </svg>
+      </div>
+      NeuroScribe
+    </div>
+    <div class="topbar-mid">
+      <select class="lang-selector" id="lang-select">
+        <option value="python">Python</option>
+        <option value="typescript">TypeScript</option>
+        <option value="javascript">JavaScript</option>
+        <option value="rust">Rust</option>
+        <option value="go">Go</option>
+        <option value="java">Java</option>
+        <option value="cpp">C++</option>
+        <option value="bash">Bash</option>
+      </select>
+      <div class="status-pill" id="status-pill">
+        <div class="status-dot"></div>
+        <span id="status-text">Ready</span>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <button class="top-btn" onclick="downloadCode()">↓ Export</button>
+      <button class="top-btn" onclick="copyAll()">⎘ Copy</button>
+      <button class="top-btn primary" onclick="generateReadme()">⚡ README</button>
+    </div>
+  </header>
+
+  <!-- LEFT SIDEBAR -->
+  <aside id="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">Thought Input</div>
+      <textarea
+        class="thought-input"
+        id="thought"
+        placeholder="Describe what you want to build…
+
+e.g. a REST API for user auth with JWT tokens and rate limiting"
+      ></textarea>
+      <button class="gen-btn" id="gen-btn" onclick="generate()">
+        ⚡ Generate Code
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Options</div>
+      <label class="option-row"><input type="checkbox" id="opt-comments" checked /> Add comments</label>
+      <label class="option-row"><input type="checkbox" id="opt-tests" /> Include tests</label>
+      <label class="option-row"><input type="checkbox" id="opt-types" checked /> Strict types</label>
+      <label class="option-row"><input type="checkbox" id="opt-error" checked /> Error handling</label>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-label">Quick Prompts</div>
+      <div class="examples-list">
+        <div class="example-chip" onclick="setPrompt('REST API with JWT auth and rate limiting')">REST API + JWT auth</div>
+        <div class="example-chip" onclick="setPrompt('WebSocket chat server with rooms and presence')">WebSocket chat server</div>
+        <div class="example-chip" onclick="setPrompt('CLI tool to scan directories and find duplicates')">Duplicate file finder CLI</div>
+        <div class="example-chip" onclick="setPrompt('Binary search tree with insert, delete, and traversal')">Binary search tree</div>
+        <div class="example-chip" onclick="setPrompt('Rate limiter using token bucket algorithm')">Token bucket rate limiter</div>
+      </div>
+    </div>
+
+    <div class="sidebar-section" style="flex:1; overflow:hidden; display:flex; flex-direction:column;">
+      <div class="sidebar-label">Session History</div>
+      <div class="history-list" id="history-list">
+        <div style="font-size:11px; color: var(--text3); padding: 4px 0;">No history yet</div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN EDITOR -->
+  <main id="main">
+    <div class="tabs" id="tabs">
+      <div class="tab active" data-tab="code" onclick="switchTab('code')">
+        <span>main<span id="file-ext">.py</span></span>
+        <div class="tab-dot"></div>
+      </div>
+      <div class="tab" data-tab="readme" onclick="switchTab('readme')">
+        <span>README.md</span>
+        <div class="tab-dot"></div>
+      </div>
+    </div>
+
+    <div class="code-area" id="code-area">
+      <div id="placeholder" class="placeholder-screen">
+        <div class="placeholder-icon">⚡</div>
+        <div class="placeholder-title">Start with a thought</div>
+        <div class="placeholder-sub">
+          Describe what you want to build in plain English.<br />
+          NeuroScribe will translate it into production-ready code with architecture insights.
+        </div>
+      </div>
+      <div id="code-view" style="display:none; height:100%;" class="code-wrapper">
+        <div class="line-nums" id="line-nums"></div>
+        <div id="code-output" spellcheck="false" contenteditable="true"></div>
+        <button class="copy-btn" onclick="copyCode()">Copy</button>
+      </div>
+      <div id="readme-view" style="display:none;">
+        <div class="readme-content" id="readme-content">
+          <p style="color: var(--text3); font-style: italic;">Generate code first, then click ⚡ README to auto-generate documentation.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-bar" id="footer-bar">
+      <div class="footer-item">
+        <span id="footer-lang">Python</span>
+      </div>
+      <div class="footer-item">
+        Lines: <span id="footer-lines">–</span>
+      </div>
+      <div class="footer-item">
+        Tokens: <span id="footer-tokens">–</span>
+      </div>
+      <div class="footer-item">
+        <span class="ok" id="footer-status">● Idle</span>
+      </div>
+      <div style="flex:1"></div>
+      <div class="footer-item" style="color: var(--text3);">NeuroScribe AI v1.0 · Built with Claude</div>
+    </div>
+  </main>
+
+  <!-- RIGHT INSIGHTS PANEL -->
+  <aside id="right-panel">
+    <div class="panel-header">
+      <span>AI Insights</span>
+      <span id="insight-count" style="color: var(--text3);">0 notes</span>
+    </div>
+    <div class="panel-body" id="insights-body">
+      <div style="font-size: 11px; color: var(--text3); text-align: center; padding: 20px 0; line-height: 1.8;">
+        Architecture insights,<br />security flags, and<br />optimization tips will<br />appear here after generation.
+      </div>
+    </div>
+    <div class="metrics-row">
+      <div class="metric-box">
+        <div class="metric-label">Complexity</div>
+        <div class="metric-value" id="met-complexity">–</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Quality</div>
+        <div class="metric-value" id="met-quality">–</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Lines</div>
+        <div class="metric-value" id="met-lines">–</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Functions</div>
+        <div class="metric-value" id="met-funcs">–</div>
+      </div>
+    </div>
+  </aside>
+
+</div>
+
+<div id="toast">✓ Copied!</div>
+
+<script>
+const EXTENSIONS = { python:'py', typescript:'ts', javascript:'js', rust:'rs', go:'go', java:'java', cpp:'cpp', bash:'sh' };
+let currentCode = '';
+let currentLang = 'python';
+let currentTab = 'code';
+let history = [];
+let isGenerating = false;
+
+document.getElementById('lang-select').addEventListener('change', e => {
+  currentLang = e.target.value;
+  document.getElementById('file-ext').textContent = '.' + EXTENSIONS[currentLang];
+  document.getElementById('footer-lang').textContent = e.target.options[e.target.selectedIndex].text;
+});
+
+function setPrompt(text) {
+  document.getElementById('thought').value = text;
+  document.getElementById('thought').focus();
+}
+
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.tab === tab));
+  document.getElementById('code-view').style.display = tab === 'code' ? 'flex' : 'none';
+  document.getElementById('readme-view').style.display = tab === 'readme' ? 'block' : 'none';
+  if (tab === 'code' && currentCode) { document.getElementById('placeholder').style.display = 'none'; }
+}
+
+function buildPrompt(thought, lang, opts) {
+  const parts = [];
+  if (opts.comments) parts.push('add helpful inline comments');
+  if (opts.tests) parts.push('include unit tests at the bottom');
+  if (opts.types) parts.push('use strict typing/type annotations');
+  if (opts.error) parts.push('include comprehensive error handling');
+
+  return `You are an elite software engineer. Generate production-quality ${lang} code for the following:
+
+"${thought}"
+
+Requirements:
+${parts.map(p => `- ${p}`).join('\n')}
+- Follow idiomatic ${lang} conventions and best practices
+- Use meaningful variable names
+- Structure code cleanly with proper separation of concerns
+- Include a brief module docstring at the top
+
+IMPORTANT: Return ONLY the raw code — no markdown fences, no explanations, no backticks. Just the code.`;
+}
+
+function buildInsightPrompt(thought, lang) {
+  return `You are a senior software architect reviewing code. For this project: "${thought}" in ${lang}.
+
+Return ONLY a JSON array of 5-7 insight objects. No markdown, no explanation — just raw JSON array.
+
+Each object has:
+- "type": one of "architecture", "performance", "security", "testing", "dependency", "idea"  
+- "text": a specific, actionable insight (1-2 sentences, concrete)
+
+Example format:
+[{"type":"security","text":"Consider using bcrypt with cost factor 12+ for password hashing."},{"type":"performance","text":"Use connection pooling to avoid overhead of creating new DB connections per request."}]`;
+}
+
+async function generate() {
+  const thought = document.getElementById('thought').value.trim();
+  if (!thought || isGenerating) return;
+
+  isGenerating = true;
+  const btn = document.getElementById('gen-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Generating…';
+
+  setStatus('Generating…', 'warn');
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('code-view').style.display = 'flex';
+  if (currentTab !== 'code') switchTab('code');
+
+  const opts = {
+    comments: document.getElementById('opt-comments').checked,
+    tests: document.getElementById('opt-tests').checked,
+    types: document.getElementById('opt-types').checked,
+    error: document.getElementById('opt-error').checked,
+  };
+
+  // Show shimmer loader
+  const codeEl = document.getElementById('code-output');
+  const lineNums = document.getElementById('line-nums');
+  lineNums.textContent = '';
+  codeEl.innerHTML = Array.from({length: 20}, (_, i) =>
+    `<div class="loading-line" style="width:${55+Math.random()*40}%; animation-delay:${i*0.05}s"></div>`
+  ).join('');
+
+  // Clear insights
+  document.getElementById('insights-body').innerHTML = Array.from({length:4}, () =>
+    `<div class="loading-line" style="height:60px; border-radius:8px; animation-delay:${Math.random()*0.5}s"></div>`
+  ).join('');
+
+  try {
+    // 1. Generate code
+    const codeResp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: buildPrompt(thought, currentLang, opts) }]
+      })
+    });
+
+    const codeData = await codeResp.json();
+    let raw = (codeData.content || []).filter(b => b.type === 'text').map(b => b.text).join('');
+    // Strip any accidental markdown fences
+    raw = raw.replace(/^```[\w]*\n?/m, '').replace(/\n?```$/m, '').trim();
+    currentCode = raw;
+
+    // Render with syntax highlight
+    codeEl.innerHTML = '';
+    renderCode(raw);
+    updateMetrics(raw);
+    addToHistory(thought);
+
+    // 2. Generate insights async
+    generateInsights(thought, currentLang);
+
+    setStatus('● Ready', 'ok');
+    document.querySelector('.tab[data-tab="code"]').classList.add('has-content');
+
+  } catch (err) {
+    codeEl.textContent = `// Error: ${err.message}\n// Check your API connection.`;
+    setStatus('● Error', 'err');
+  }
+
+  btn.disabled = false;
+  btn.textContent = '⚡ Generate Code';
+  isGenerating = false;
+}
+
+async function generateInsights(thought, lang) {
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: buildInsightPrompt(thought, lang) }]
+      })
+    });
+    const data = await resp.json();
+    const raw = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    let insights = [];
+    try {
+      const clean = raw.replace(/^```json?\n?/, '').replace(/\n?```$/, '').trim();
+      insights = JSON.parse(clean);
+    } catch { insights = [{ type: 'idea', text: 'Insights could not be parsed. Try regenerating.' }]; }
+
+    renderInsights(insights);
+  } catch {
+    renderInsights([{ type: 'idea', text: 'Could not load insights.' }]);
+  }
+}
+
+async function generateReadme() {
+  if (!currentCode) { showToast('Generate code first!'); return; }
+  const thought = document.getElementById('thought').value.trim() || 'this project';
+
+  switchTab('readme');
+  document.querySelector('.tab[data-tab="readme"]').classList.add('has-content');
+  const el = document.getElementById('readme-content');
+  el.innerHTML = Array.from({length:8}, () =>
+    `<div class="loading-line" style="width:${40+Math.random()*55}%; margin:10px 0;"></div>`
+  ).join('');
+
+  setStatus('Generating README…', 'warn');
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `Generate a professional GitHub README for a ${currentLang} project: "${thought}".
+
+Include: project title with emoji, badges row, description, features list, installation steps, usage example with code block, API reference (if applicable), and license section.
+
+Format as clean Markdown. Be specific and professional. No filler text.`
+        }]
+      })
+    });
+    const data = await resp.json();
+    const md = (data.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim();
+    el.innerHTML = mdToHtml(md);
+    setStatus('● Ready', 'ok');
+  } catch (err) {
+    el.innerHTML = `<p style="color:var(--red)">Error: ${err.message}</p>`;
+    setStatus('● Error', 'err');
+  }
+}
+
+function renderCode(code) {
+  const codeEl = document.getElementById('code-output');
+  const lineNums = document.getElementById('line-nums');
+  const lines = code.split('\n');
+  lineNums.innerHTML = lines.map((_, i) => `<div>${i + 1}</div>`).join('');
+  codeEl.innerHTML = highlight(code, currentLang);
+}
+
+function highlight(code, lang) {
+  // Lightweight syntax highlighter
+  let h = code
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+  if (lang === 'python') {
+    h = h
+      .replace(/(#[^\n]*)/g, '<span class="com">$1</span>')
+      .replace(/"""[\s\S]*?"""|'''[\s\S]*?'''/g, m => `<span class="str">${m}</span>`)
+      .replace(/"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/g, m => `<span class="str">${m}</span>`)
+      .replace(/\b(def|class|import|from|return|if|elif|else|for|while|try|except|finally|with|as|in|not|and|or|is|None|True|False|async|await|yield|pass|raise|lambda|global|nonlocal)\b/g, '<span class="kw">$1</span>')
+      .replace(/\b([A-Z][A-Za-z0-9_]*)\b(?=\s*[:(])/g, '<span class="type">$1</span>')
+      .replace(/\b([a-z_][a-z_0-9]*)\s*(?=\()/g, '<span class="fn">$1</span>')
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>')
+      .replace(/(@[a-zA-Z_]+)/g, '<span class="dec">$1</span>');
+  } else if (lang === 'typescript' || lang === 'javascript') {
+    h = h
+      .replace(/(\/\/[^\n]*)/g, '<span class="com">$1</span>')
+      .replace(/\/\*[\s\S]*?\*\//g, m => `<span class="com">${m}</span>`)
+      .replace(/(["'`])(?:(?!\1)[^\\]|\\.)*\1/g, m => `<span class="str">${m}</span>`)
+      .replace(/\b(const|let|var|function|class|return|if|else|for|while|try|catch|finally|import|export|default|new|this|typeof|instanceof|async|await|yield|null|undefined|true|false|void|interface|type|enum|extends|implements|readonly)\b/g, '<span class="kw">$1</span>')
+      .replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, '<span class="type">$1</span>')
+      .replace(/\b([a-z_][a-z_0-9]*)\s*(?=\()/g, '<span class="fn">$1</span>')
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+  } else if (lang === 'rust') {
+    h = h
+      .replace(/(\/\/[^\n]*)/g, '<span class="com">$1</span>')
+      .replace(/"([^"\\]|\\.)*"/g, m => `<span class="str">${m}</span>`)
+      .replace(/\b(fn|let|mut|use|pub|struct|enum|impl|trait|return|if|else|for|while|match|mod|crate|self|super|type|where|async|await|move|ref|const|static|unsafe)\b/g, '<span class="kw">$1</span>')
+      .replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, '<span class="type">$1</span>')
+      .replace(/#\[[^\]]+\]/g, m => `<span class="dec">${m}</span>`)
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+  } else if (lang === 'go') {
+    h = h
+      .replace(/(\/\/[^\n]*)/g, '<span class="com">$1</span>')
+      .replace(/"([^"\\]|\\.)*"/g, m => `<span class="str">${m}</span>`)
+      .replace(/\b(func|var|const|type|struct|interface|return|if|else|for|range|switch|case|default|import|package|go|defer|chan|select|break|continue|fallthrough|nil|true|false)\b/g, '<span class="kw">$1</span>')
+      .replace(/\b([A-Z][A-Za-z0-9_]*)\b/g, '<span class="type">$1</span>')
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+  } else {
+    h = h
+      .replace(/(\/\/[^\n]*|#[^\n]*)/g, '<span class="com">$1</span>')
+      .replace(/"([^"\\]|\\.)*"|'([^'\\]|\\.)*'/g, m => `<span class="str">${m}</span>`)
+      .replace(/\b(\d+\.?\d*)\b/g, '<span class="num">$1</span>');
+  }
+
+  return h;
+}
+
+function renderInsights(insights) {
+  const body = document.getElementById('insights-body');
+  const TYPE_MAP = {
+    architecture: ['badge-arch', '⬡ Architecture'],
+    performance:  ['badge-perf', '◈ Performance'],
+    security:     ['badge-sec',  '⚠ Security'],
+    testing:      ['badge-test', '◎ Testing'],
+    dependency:   ['badge-dep',  '✦ Dependency'],
+    idea:         ['badge-idea', '⚡ Idea'],
+  };
+
+  body.innerHTML = insights.map(ins => {
+    const [cls, label] = TYPE_MAP[ins.type] || TYPE_MAP.idea;
+    return `<div class="insight-card">
+      <div class="insight-type"><span class="insight-badge ${cls}">${label}</span></div>
+      <div class="insight-text">${ins.text}</div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('insight-count').textContent = insights.length + ' notes';
+}
+
+function updateMetrics(code) {
+  const lines = code.split('\n').length;
+  const fnMatches = code.match(/\b(def |function |fn |func )/g) || [];
+  const words = code.split(/\s+/).length;
+
+  document.getElementById('met-lines').textContent = lines;
+  document.getElementById('met-funcs').textContent = fnMatches.length;
+  document.getElementById('met-complexity').textContent = fnMatches.length > 10 ? 'High' : fnMatches.length > 4 ? 'Med' : 'Low';
+  document.getElementById('met-quality').textContent = words > 80 ? 'A' : 'B';
+
+  document.getElementById('footer-lines').textContent = lines;
+  document.getElementById('footer-tokens').textContent = Math.round(code.length / 4);
+
+  const lineNums = document.getElementById('line-nums');
+  lineNums.innerHTML = Array.from({length: lines}, (_, i) => `<div>${i + 1}</div>`).join('');
+}
+
+function addToHistory(thought) {
+  const label = thought.length > 35 ? thought.slice(0, 35) + '…' : thought;
+  history.unshift({ label, thought, code: currentCode, lang: currentLang });
+  if (history.length > 20) history.pop();
+  const list = document.getElementById('history-list');
+  list.innerHTML = history.map((h, i) =>
+    `<div class="history-item ${i === 0 ? 'active' : ''}" onclick="loadHistory(${i})" title="${h.thought}">${h.label}</div>`
+  ).join('');
+}
+
+function loadHistory(i) {
+  const h = history[i];
+  document.getElementById('thought').value = h.thought;
+  currentCode = h.code;
+  currentLang = h.lang;
+  document.getElementById('lang-select').value = h.lang;
+  document.getElementById('file-ext').textContent = '.' + EXTENSIONS[h.lang];
+  document.getElementById('placeholder').style.display = 'none';
+  document.getElementById('code-view').style.display = 'flex';
+  switchTab('code');
+  renderCode(h.code);
+  updateMetrics(h.code);
+  document.querySelectorAll('.history-item').forEach((el, j) => el.classList.toggle('active', j === i));
+}
+
+function setStatus(text, type) {
+  const el = document.getElementById('footer-status');
+  const pill = document.getElementById('status-text');
+  el.textContent = text;
+  el.style.color = type === 'ok' ? 'var(--green)' : type === 'warn' ? 'var(--amber)' : 'var(--red)';
+  pill.textContent = type === 'ok' ? 'Ready' : type === 'warn' ? 'Working…' : 'Error';
+}
+
+function copyCode() {
+  if (!currentCode) return;
+  navigator.clipboard.writeText(currentCode).then(() => showToast('Code copied!'));
+}
+
+function copyAll() {
+  if (!currentCode) return;
+  navigator.clipboard.writeText(currentCode).then(() => showToast('Copied to clipboard!'));
+}
+
+function downloadCode() {
+  if (!currentCode) return;
+  const ext = EXTENSIONS[currentLang] || 'txt';
+  const blob = new Blob([currentCode], { type: 'text/plain' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `neuroscribe_output.${ext}`; a.click();
+  showToast('File downloaded!');
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = (msg.includes('copied') ? '✓ ' : '↓ ') + msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+function mdToHtml(md) {
+  let h = md
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/`([^`]+)`/g, '<code>$1</code>')
+    .replace(/```[\s\S]*?```/g, m => `<pre>${m.replace(/```\w*\n?/, '').replace(/```/, '')}</pre>`)
+    .replace(/^\- (.+)$/gm, '<li>$1</li>')
+    .replace(/(<li>.*<\/li>(\n|$))+/g, m => `<ul>${m}</ul>`)
+    .replace(/^(?!<[h|u|p|l|s|b])(.*\S.*)$/gm, '<p>$1</p>')
+    .replace(/!\[.*?\]\(.*?\)/g, '')
+    .replace(/\[([^\]]+)\]\([^\)]+\)/g, '<span style="color:var(--cyan)">$1</span>');
+  return h;
+}
+
+// Allow Ctrl+Enter to generate
+document.getElementById('thought').addEventListener('keydown', e => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') { e.preventDefault(); generate(); }
+});
+
+// Sync line numbers on edit
+document.getElementById('code-output').addEventListener('input', function() {
+  const lines = this.innerText.split('\n').length;
+  document.getElementById('line-nums').innerHTML = Array.from({length: lines}, (_, i) => `<div>${i + 1}</div>`).join('');
+  document.getElementById('footer-lines').textContent = lines;
+  currentCode = this.innerText;
+});
+</script>
+</body>
+</html>
